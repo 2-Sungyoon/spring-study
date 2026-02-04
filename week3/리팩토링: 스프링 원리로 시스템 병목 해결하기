@@ -1,0 +1,122 @@
+# 📅 [week 3] 리팩토링: 스프링 원리로 시스템 병목 해결하기
+
+## 🎯 학습 목표
+- **PSA:** `ArgumentResolver`를 통해 컨트롤러가 기술에 종속되지 않게 만드는 추상화 설계의 이점을 구현함
+- **안정성 패턴 (Resilience):** `@Async` 스레드 풀 격리와 `Resilience4j` 서킷 브레이커를 통해 외부 장애를 차단함
+- **빈 생명주기와 튜닝:** `HikariCP`와 `ThreadPoolTaskExecutor`의 초기화와 튜닝
+- **JPA 성능 병목 뚫기:** `JdbcTemplate` Bulk Insert와 `Optimistic Lock`, `Batch Fetching`으로 대용량/동시성 문제를 해결
+
+---
+
+## 📝 주요 개념 및 Engineering Decision
+
+### 1. ArgumentResolver: PSA
+- **[상황]:** 컨트롤러가 `HttpServletRequest`나 `Cookie`에 직접 의존하여 인증 방식 변경(세션, JWT 등) 시 모든 코드를 수정해야 했다.
+- **[결정]:** 스프링의 `ArgumentResolver`를 도입하여 인증 로직을 캡슐화했다. 컨트롤러는 오직 `@LoginUser`라는 인터페이스만 바라보게 하여 OCP(개방-폐쇄 원칙)를 지켰다.
+
+### 2. 장애 격리: @Async와 서킷 브레이커(Circuit Breaker)
+- **[상황]:** AI 요약 API 지연(30s+) 시 톰캣 스레드가 고갈되어 메인 기능까지 마비되는 장애 전파가 발생했다.
+- **[결정]:**
+  - **Bulkhead:** `@Async`와 커스텀 스레드 풀을 통해 AI 전용 리소스를 메인 리소스와 물리적으로 격리했다.
+  - **Circuit Breaker (차단):** `Resilience4j`를 AOP로 적용하여, 외부 API 실패율이 임계치를 넘으면 즉시 차단(Fail-fast)하고 기본값을 반환하여 시스템을 보호했다.
+
+### 3. JPA의 한계와 로우 레벨 최적화
+- **[상황]:**
+  - **N+1 문제:** 연관 데이터 조회 시 쿼리가 폭발했다. `Fetch Join`은 데이터 뻥튀기 위험이 있어, `hibernate.default_batch_fetch_size`를 통한 **Global Batch Fetching**(`IN` 절 조회)을 선택했다.
+  - **대량 삽입:** JPA `saveAll`은 `IDENTITY` 전략에서 배치 처리가 안 된다. `JdbcTemplate`으로 쿼리를 묶어 보내 성능을 높였다.
+  - **동시성:** 읽기가 많은 추천 기능에 비관적 락(DB Lock)은 오버엔지니어링이라고 판단했다. 애플리케이션 레벨의 **낙관적 락인 @Version**을 적용했다.
+
+---
+
+## 💻 코드 실습 및 분석
+
+### 1. ArgumentResolver: 성능 최적화 (week1에 다룬 내용)
+단순 파싱을 넘어, 불필요한 영속성 컨텍스트 로딩을 막는 최적화를 포함
+
+```java
+@Override
+public Object resolveArgument(...) {
+    // 1. 캡슐화를 통해 쿠키 파싱 등 기술적 구현은 숨긴다.
+    String uid = extractUidFromCookies(request); 
+    if (uid == null) return null;
+    Long userId = Long.valueOf(uid);
+
+    // 2. FK(ID)만 필요한 경우, 무거운 User 엔티티 조회를 건너뛰어 성능 최적화를 한다.
+    // 프록시 초기화 비용 또한 절약 가능하다.
+    if (Long.class.isAssignableFrom(parameter.getParameterType())) {
+        return userId;
+    }
+    return userRepository.findById(userId).orElseThrow(...);
+}
+```
+### 2.장애 격리 아키텍처: ThreadPool & CircuitBreaker
+빈 생명주기 제어와 AOP 기술을 결합하였다.
+
+```java
+// 1. 리소스 격리 (Bulkhead Pattern)
+@Bean(name = "aiTaskExecutor")
+public Executor aiTaskExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(10); 
+    executor.setMaxPoolSize(30); // 최대 30개까지만 점유 제한
+    executor.setQueueCapacity(100); 
+    executor.initialize(); // 빈 초기화 시점에 스레드 공간 확보
+    return executor;
+}
+
+// 2. 서킷 브레이커 (AOP) 
+@CircuitBreaker(name = "aiService", fallbackMethod = "fallbackSummary")
+public String getSummary(String text) {
+    // 외부 API 호출 로직
+    return openAiClient.summary(text);
+}
+
+// 장애 발생 시 실행될 대체 로직 (반드시 Throwable을 받아야 원인을 로깅할 수 있음)
+public String fallbackSummary(String text, Throwable t) {
+    log.error("AI Service Unavailable: {}", t.getMessage());
+    return "요약 서비스가 일시적으로 불가능합니다."; // 즉시 응답 반환
+}
+```
+### 3. JPA 성능 튜닝 세트
+프레임워크의 자동 설정과 로우 레벨 기술을 배합했다.
+- A. Global Batch Fetching (N+1 해결)
+```java
+# application.yml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100 # 연관 엔티티를 100개씩 IN 절로 묶어서 조회
+```
+
+- B. 낙관적 락 & Bulk Insert
+```java
+// 1. 낙관적 락 (동시성 제어)
+@Entity
+public class Place {
+    @Version // JPA가 관리하는 버전 필드
+    private Long version;
+}
+
+// 2. Bulk Insert (대량 데이터 성능)
+public void saveAll(List<Station> stations) {
+    // JPA 우회 -> JDBC 직접 사용 (Batch Update)
+    // 100개씩 끊어서 DB에 전송 (메모리 오버플로우 방지 및 패킷 최적화)
+    jdbcTemplate.batchUpdate("INSERT INTO ...", stations, 100, ...);
+}
+```
+
+
+---
+
+## 💡 회고 및 질의응답
+코드 레벨의 리팩토링은 너무 막연하기도 하고... 흥미도 못 느꼈고... 공부도 부족하기에 관심있는 OS/DB와 관련된 병목을 해결해보며, 수많은 기술들이 있지만 각 기술마다의 side effect를 잘 고려해야함을 알 수 있었다. 추후에는 자바 또는 코틀린을 학습하고 언어딴의 리팩토링도 깊게 진행해보고싶다.
+
+- Q: N+1 문제 해결에 Fetch Join 대신 Batch Size를 선택한 이유는?
+  - A: Fetch Join은 1:N 관계에서 데이터가 중복 조회(Cartesian Product)되는 문제가 있고, 페이징 쿼리와 함께 사용 시 메모리에서 필터링을 수행하여 OOM(Out of Memory) 위험이 크다. 안정적인 페이징과 적절한 쿼리 최적화(O(1))를 동시에 잡기 위해 Batch Size 방식을 전역으로 적용했다.
+- Q: 서킷 브레이커가 동작하면 사용자는 어떤 경험을 하게 되나?
+  - A: AI 요약이 안 된다고 해서 페이지 전체가 에러 화면으로 바뀌지 않는다. 서킷 브레이커가 fallback 메서드를 실행하여 "잠시 후 다시 시도해주세요" 같은 기본 메시지를 즉시 반환한다. 사용자는 지연 없이 메인 콘텐츠를 소비할 수 있다. (Fail-fast) 
+- Q: 비동기 큐가 꽉 차서 요청이 유실되면 어떡하나?
+  - A: AI 요약은 핵심 비즈니스(지도, 저장)가 아닌 부가 기능이다. 시스템 전체가 느려지는 것보다, 부가 기능을 과감히 드랍(Drop)하여 메인 기능을 살리는 것이 운영상 더 중요하다고 판단했다. 
+- Q: JPA와 JdbcTemplate을 혼용하면 트랜잭션은?
+  - A: 스프링의 DataSourceTransactionManager가 동일한 DataSource를 관리하므로 트랜잭션은 하나로 묶인다. JPA 작업 후 JDBC로 Insert 하다가 에러가 나면, JPA의 변경 사항도 같이 롤백된다.
