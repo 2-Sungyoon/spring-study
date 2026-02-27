@@ -19,14 +19,14 @@
 
 ## 😊 Collaborators
 
-| [2-Sungyoon](https://github.com/2-Sungyoon) | [dev-cyan](https://github.com/dev-cyan) | [chohaewon48](https://github.com/chohaewon48) |
-| :---: | :---: | :---: |
-| <a href="https://github.com/2-Sungyoon"><img src="https://github.com/2-Sungyoon.png" width="80"></a> | <a href="https://github.com/dev-cyan"><img src="https://github.com/dev-cyan.png" width="80"></a> | <a href="https://github.com/chohaewon48"><img src="https://github.com/chohaewon48.png" width="80"></a> |
+| [2-Sungyoon](https://github.com/2-Sungyoon) | [dev-cyan](https://github.com/dev-cyan) | [chohaewon48](https://github.com/chohaewon48) | [1jae2jae3jae](https://github.com/1jae2jae3jae) | [usbinn](https://github.com/usbinn) |
+| :---: | :---: | :---: | :---: | :---: |
+| <a href="https://github.com/2-Sungyoon"><img src="https://github.com/2-Sungyoon.png" width="80"></a> | <a href="https://github.com/dev-cyan"><img src="https://github.com/dev-cyan.png" width="80"></a> | <a href="https://github.com/chohaewon48"><img src="https://github.com/chohaewon48.png" width="80"></a> | <a href="https://github.com/1jae2jae3jae"><img src="https://github.com/1jae2jae3jae.png" width="80"></a> | <a href="https://github.com/usbinn"><img src="https://github.com/usbinn.png" width="80"></a> |
 
 <br/>
 
 ### Rules
 
-> **매주 목요일 대면 스터디 진행** (공휴일 제외)
+> **매주 화요일 스터디 진행** (공휴일 제외)
 > 
-> **수요일까지 개인별 정리본 업로드 완료**
+> **월요일까지 개인별 정리본 업로드 완료**
