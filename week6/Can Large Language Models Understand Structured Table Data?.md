@@ -38,7 +38,7 @@ LLM은 **토큰 간의 거리와 문맥**을 계산합니다.
     - 예: 가격과 수량을 곱해 총액 계산.
 ## 2차원의 구조를 모델이 어떻게 학습할 것인가?
 
-1. 대규모의 table 데이터를 이용하여 **table에 특화된 사전 학습**을 수행하자!
+# 대규모의 table 데이터를 이용하여 **table에 특화된 사전 학습**을 수행하자!
 
 <img width="1190" height="417" alt="Image" src="https://github.com/user-attachments/assets/44549461-cf6a-4a82-9a64-8a5efab7b3ee" />
 
@@ -60,7 +60,7 @@ LLM은 **토큰 간의 거리와 문맥**을 계산합니다.
 
 **1. Simple Linearization**
 왼쪽의 2x2 표를 한 줄의 텍스트 토큰으로 펼치는 과정입니다.
-• **Token Embeddings**: 표의 내용(col1, col2, 0, 1, 2, 3)과 질문(query)을 일렬로 나열합니다. `[CLS]`는 문장의 시작, `[SEP]`는 질문과 표 데이터 사이의 구분자 역할을 합니다.
+- **Token Embeddings**: 표의 내용(col1, col2, 0, 1, 2, 3)과 질문(query)을 일렬로 나열합니다. `[CLS]`는 문장의 시작, `[SEP]`는 질문과 표 데이터 사이의 구분자 역할을 합니다.
 
 **2. Multi-layered Embeddings**
 텍스트만 나열하면 AI는 어떤 숫자가 몇 행 몇 열에 있는지 알 수 없습니다. 
@@ -88,7 +88,7 @@ LLM은 **토큰 간의 거리와 문맥**을 계산합니다.
 
 2. Fine-tuning
 
-1. 합성 데이터 생성
+a. 합성 데이터 생성
 
 모델을 학습시키려면 엄청나게 많은 표와 질문 데이터가 필요합니다. 하지만 사람이 직접 만든 데이터는 한계가 잇죠. 그래서 TAPEX는 다음과 같은 방식을 씁니다.
 
@@ -140,7 +140,7 @@ d. Fine tuning
     
 - 하지만 표의 종류가 바뀔 때마 다 사람이 일일이 템플릿을 새로 짜줘야 한다는 번거로움이 있습니다.
 
-1. LLM이 이미 가지고 있는 지식을 이용하자!
+# LLM이 이미 가지고 있는 지식을 이용하자!
 
 <img width="1188" height="418" alt="Image" src="https://github.com/user-attachments/assets/852df8aa-3d1b-40f3-b810-33ffec8ac2d7" />
 
