@@ -161,7 +161,7 @@ jobs:
 - gradle 캐시 추가
 - 매번 의존성 재다운로드 방지 → 빌드 속도 향상
 
-1. **이미지 태그 방식 변경**
+2. **이미지 태그 방식 변경**
 
 ```bash
 docker build -t $IMAGE_NAME:dev .
@@ -183,7 +183,7 @@ docker push $IMAGE_NAME:$SHA_TAG
 - SHA 태그 추가
 - 어떤 커밋이 배포됐는지 추적 가능
 
-1. **ec2 배포 방식 변경**
+3. **ec2 배포 방식 변경**
 
 ```bash
 cd /home/ubuntu
@@ -231,7 +231,7 @@ sudo docker image prune -f
 
 → 낭비 줄이고, 실패했을 때 영향이 적음
 
-1. **Dockerfile 변경**
+4. **Dockerfile 변경**
 
 Dockerfile의 역할 : **`코드 → EC2로 올라감 → EC2에서 Dockerfile로 빌드 → 실행`**
 
@@ -278,7 +278,7 @@ FROM eclipse-temurin:17-jre-jammy
     - 공장에서 완제품(이미지) 만들어서 진열만 함
 - 확장성, 안정성 good
 - 배포 빠름
-1. Build 기반
+2. Build 기반
 - `server 빌드 기반`
     - 서버에서 직접 코드를 빌드하는 방식
 - 코드가 서버에 있어야 함
