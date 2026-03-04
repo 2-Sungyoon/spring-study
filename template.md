@@ -1,23 +1,22 @@
-# 📅 [week 1] 주제: 
+# 📅 [week N] 주제: 
 
 ## 🎯 학습 목표
-- 
 - 
 
 ---
 
 ## 📝 주요 개념 정리
-### 1. 소제목 (예: Spring Bean의 생명주기)
-- 
-
-### 2. 소제목 (예: @Component vs @Configuration)
+### 1. 소제목
 - 
 
 ---
 
 ## 💻 코드 실습 및 분석
 ```java
-// 핵심 로직이나 기억해야 할 코드를 작성하세요.
-public void study() {
-    System.out.println("Spring Study!");
-}
+
+```
+
+---
+
+## 💡 회고 및 질의응답
+- 
