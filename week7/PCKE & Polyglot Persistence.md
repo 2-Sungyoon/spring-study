@@ -26,6 +26,7 @@
 
 ### 3. 인증 아키텍처의 패러다임 전환: 폴리글랏 퍼시스턴스 (Polyglot Persistence)
 <img width="402" height="251" alt="image" src="https://github.com/user-attachments/assets/87b2dce4-cdcd-418a-aef9-d6f5f0ff57dd" />
+- 하나의 애플리케이션이나 시스템 내에서 데이터의 특성에 따라 서로 다른 종류의 데이터 저장 기술(관계형 DB, NoSQL 등)을 조합하여 사용하는 전략
 - 요약하면, 같은 DB를 여러개의 인스턴스로 두거나, 여러개의 DB를 씀 [추후에 찾아보니, MSA 발전과 함께 더 각광?받는 거 같아요. 이유는 각 서비스가 자체 데이터베이스를 관리하는 것을 선호하기 때문입니다]
 이는 단순히 로그인을 구현하는데 왜 메인 RDBMS(PostgreSQL) 외에 보조 DB(Redis, MongoDB)를 두어야 하는지에 대한 아키텍처적 근거입니다.
 
