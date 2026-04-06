@@ -1,4 +1,4 @@
-# 📅 [week N] 주제: CORS Configuration
+# 📅 [week 8] 주제: CORS Configuration
 
 ## 🎯 학습 목표
 - Spring Boot 프로젝트에서 CORS 관련 설정 방식에 대해 학습한다.
